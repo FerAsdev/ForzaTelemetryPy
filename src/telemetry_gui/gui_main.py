@@ -1,5 +1,3 @@
-# gui_main.py
-
 import sys
 import os
 import json
@@ -11,7 +9,7 @@ import matplotlib.pyplot as plt
 
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel,
-    QPushButton, QComboBox, QFileDialog, QTextEdit, QTabWidget
+    QPushButton, QComboBox, QFileDialog, QTextEdit, QTabWidget, QSizePolicy
 )
 from PyQt5.QtCore import Qt
 
@@ -24,6 +22,7 @@ from .gui_tire_temps import plot_tire_temperatures
 from .gui_suspension import plot_suspension_behavior
 from .gui_track import plot_track
 from .gui_attitude import plot_attitude
+from .gui_track_colored import plot_track_colored
 
 
 class TelemetryViewer(QWidget):
@@ -48,7 +47,6 @@ class TelemetryViewer(QWidget):
         file_layout.addWidget(self.csv_label)
         file_layout.addWidget(btn_json)
         file_layout.addWidget(self.json_label)
-
         main_layout.addLayout(file_layout)
 
         # Etiqueta para mostrar el mejor tiempo global
@@ -78,6 +76,10 @@ class TelemetryViewer(QWidget):
         self.stats_text = QTextEdit()
         self.stats_text.setReadOnly(True)
         main_layout.addWidget(self.stats_text)
+
+        # Ajuste de estiramiento para que el tab_widget expanda antes que stats_text
+        main_layout.setStretchFactor(self.tab_widget, 1)
+        main_layout.setStretchFactor(self.stats_text, 0)
 
         self.df = None
         self.stats_json = None
@@ -119,7 +121,6 @@ class TelemetryViewer(QWidget):
     def populate_laps(self):
         self.lap_combo.clear()
         if self.df is not None and "LapNumber" in self.df.columns:
-            # Si existe 'BestLap', obtenemos el mejor tiempo válido (>0)
             if "BestLap" in self.df.columns:
                 valid_bestlaps = self.df[self.df["BestLap"] > 0]["BestLap"]
                 if not valid_bestlaps.empty:
@@ -130,7 +131,6 @@ class TelemetryViewer(QWidget):
             else:
                 self.best_lap_label.setText("Best Lap: N/A")
 
-            # Agregamos las vueltas únicas al combo, concatenando el tiempo de LastLap
             laps = sorted(self.df["LapNumber"].unique())
             for lap in laps:
                 lap_df = self.df[self.df["LapNumber"] == lap]
@@ -156,9 +156,6 @@ class TelemetryViewer(QWidget):
         if not lap_str:
             return
 
-        # Si el texto es "2 - 1:27.345", extraemos la parte antes del " - "
-        # Para mayor robustez, parseamos hasta el primer espacio o guion
-        # o simplemente tomamos el primer token
         lap_number_str = lap_str.split("-")[0].strip()
         if not lap_number_str.isdigit():
             return
@@ -168,7 +165,6 @@ class TelemetryViewer(QWidget):
         if lap_df.empty:
             return
 
-        # Creamos la columna de tiempo relativo si no existe
         if "TimestampMS" in lap_df.columns:
             lap_df["TimeSec"] = lap_df["TimestampMS"] / 1000.0
             lap_df["RelativeTime"] = lap_df["TimeSec"] - lap_df["TimeSec"].iloc[0]
@@ -180,42 +176,64 @@ class TelemetryViewer(QWidget):
         # 1) Gráfico básico de Speed
         fig_speed = plot_speed_vs_time(lap_df, lap_number)
         speed_canvas = FigureCanvas(fig_speed)
+        speed_canvas.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        speed_canvas.updateGeometry()
         self.tab_widget.addTab(speed_canvas, "Speed")
         speed_canvas.draw()
 
         # 2) Gráfico básico de RPM
         fig_rpm = plot_rpm_vs_time(lap_df, lap_number)
         rpm_canvas = FigureCanvas(fig_rpm)
+        rpm_canvas.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        rpm_canvas.updateGeometry()
         self.tab_widget.addTab(rpm_canvas, "RPM")
         rpm_canvas.draw()
 
         # 3) Gráfico estilo MoTec
         fig_motec = plot_motec_style_figure(lap_df, lap_number)
         motec_canvas = FigureCanvas(fig_motec)
+        motec_canvas.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        motec_canvas.updateGeometry()
         self.tab_widget.addTab(motec_canvas, "MoTec Style")
         motec_canvas.draw()
 
         # 4) Gráfico: Temperatura de neumáticos
         fig_tires = plot_tire_temperatures(lap_df, lap_number)
         tire_canvas = FigureCanvas(fig_tires)
+        tire_canvas.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        tire_canvas.updateGeometry()
         self.tab_widget.addTab(tire_canvas, "Tire Temps")
         tire_canvas.draw()
 
         # 5) Gráfico: Comportamiento de la suspensión
         fig_suspension = plot_suspension_behavior(lap_df, lap_number)
         susp_canvas = FigureCanvas(fig_suspension)
+        susp_canvas.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        susp_canvas.updateGeometry()
         self.tab_widget.addTab(susp_canvas, "Suspension")
         susp_canvas.draw()
 
-        # 6) Nueva gráfica: Trazada en el Circuito
+        # 6) Gráfico: Trazada en el Circuito
         fig_track = plot_track(lap_df, lap_number)
         track_canvas = FigureCanvas(fig_track)
+        track_canvas.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        track_canvas.updateGeometry()
         self.tab_widget.addTab(track_canvas, "Track")
         track_canvas.draw()
 
-        # 7) Gráfico: Actitud (Yaw, Pitch, Roll)
+        # 7) Gráfico: Trazada coloreada
+        fig_track_colored = plot_track_colored(lap_df, lap_number)
+        track_colored_canvas = FigureCanvas(fig_track_colored)
+        track_colored_canvas.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        track_colored_canvas.updateGeometry()
+        self.tab_widget.addTab(track_colored_canvas, "Track Colored")
+        track_colored_canvas.draw()
+
+        # 8) Gráfico: Actitud (Yaw, Pitch, Roll)
         fig_attitude = plot_attitude(lap_df, lap_number)
         attitude_canvas = FigureCanvas(fig_attitude)
+        attitude_canvas.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        attitude_canvas.updateGeometry()
         self.tab_widget.addTab(attitude_canvas, "Attitude")
         attitude_canvas.draw()
 
@@ -247,6 +265,7 @@ def main():
     viewer.resize(1200, 800)
     viewer.show()
     sys.exit(app.exec_())
+
 
 if __name__ == "__main__":
     main()

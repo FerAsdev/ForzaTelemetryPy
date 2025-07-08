@@ -22,7 +22,7 @@ def plot_motec_style_figure(lap_df, lap_number=None, time_col="RelativeTime"):
 
     ax_speed = axes[0]
     if "SpeedKph" in lap_df.columns:
-        ax_speed.plot(lap_df[time_col], lap_df["SpeedKph"], color="green", label="Speed (kph)")
+        ax_speed.plot(lap_df[time_col], lap_df["SpeedKph"], color="blue", label="Speed (kph)")
         ax_speed.set_ylabel("Speed (kph)")
         ax_speed.legend(loc="upper left")
         ax_speed.grid(True)
@@ -44,7 +44,7 @@ def plot_motec_style_figure(lap_df, lap_number=None, time_col="RelativeTime"):
 
     ax_gear = axes[2]
     if "Gear" in lap_df.columns:
-        ax_gear.step(lap_df[time_col], lap_df["Gear"], color="yellow", label="Gear", where='post')
+        ax_gear.step(lap_df[time_col], lap_df["Gear"], color="orange", label="Gear", where='post')
         ax_gear.set_ylabel("Gear")
         ax_gear.legend(loc="upper left")
         ax_gear.grid(True)
@@ -56,7 +56,7 @@ def plot_motec_style_figure(lap_df, lap_number=None, time_col="RelativeTime"):
     ax_throttle = axes[3]
     if "Accel" in lap_df.columns:
         normalized_throttle = lap_df["Accel"] / 2.55
-        ax_throttle.plot(lap_df[time_col], normalized_throttle, color="red", label="Throttle (%)")
+        ax_throttle.plot(lap_df[time_col], normalized_throttle, color="green", label="Throttle (%)")
         ax_throttle.set_ylabel("Throttle (%)")
         ax_throttle.legend(loc="upper left")
         ax_throttle.grid(True)
@@ -68,7 +68,7 @@ def plot_motec_style_figure(lap_df, lap_number=None, time_col="RelativeTime"):
     ax_brake = axes[4]
     if "Brake" in lap_df.columns:
         normalized_brake = lap_df["Brake"] / 2.55
-        ax_brake.plot(lap_df[time_col], normalized_brake, color="orange", label="Brake (%)")
+        ax_brake.plot(lap_df[time_col], normalized_brake, color="red", label="Brake (%)")
         ax_brake.set_ylabel("Brake (%)")
         ax_brake.legend(loc="upper left")
         ax_brake.grid(True)
